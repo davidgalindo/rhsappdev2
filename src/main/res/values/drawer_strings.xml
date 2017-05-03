@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="main_drawer">
+        <item>Overview</item>
+        <item>My Goals</item>
+        <item>My Diet</item>
+        <item>All Widgets</item>
+        <item>About</item>
+    </string-array>
+</resources>

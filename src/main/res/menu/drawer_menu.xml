@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/mainMap"
+            android:title="Main Map"
+            android:icon="@drawable/ic_map_black_24dp"
+            android:checked="true"
+            />
+        <item
+            android:id="@+id/houseList"
+            android:title="House List"
+            android:icon="@drawable/ic_map_black_24dp"
+            />
+        <item
+            android:id="@+id/mainMenu"
+            android:title="FAQ"
+            android:icon="@drawable/ic_question_answer_black_24dp"
+            />
+        <item
+            android:id="@+id/settingsMenu"
+            android:title="Setttings"
+            android:icon="@drawable/ic_settings_black_24dp"
+            />
+
+    </group>
+</menu>

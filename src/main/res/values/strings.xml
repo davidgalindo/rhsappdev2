@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">ArcGIS Testing</string>
+    <string name="redlands">Take me to the UoR</string>
+    <string name="redlands_id">1</string>
+    <string name="ucla">Take me to UCLA</string>
+    <string name="ucla_id">2</string>
+    <string name="nyu">Take me to NYU</string>
+    <string name="nyu_id">3</string>
+
+
+
+    <!-- Drawer Strings -->
+    <string name="action_main_menu">Main Menu</string>
+    <string name="action_goto_settings">Settings</string>
+    <string name="drawer_open">Open Drawer</string>
+    <string name="drawer_close">Close Drawer</string>
+    <string name="title_activity_settings">Settings</string>
+</resources>
