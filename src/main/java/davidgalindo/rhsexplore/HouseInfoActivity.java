@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,8 +14,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 
 /**
  * Created by David on 5/3/2017.
@@ -46,14 +50,11 @@ public class HouseInfoActivity extends Activity {
         //Execute AsyncTasks
         new WebPageRetriever(websiteURL).execute();
         new ImageRetriever(houseImageUrl).execute();
-
-
     }
-
-
     private class WebPageRetriever extends  AsyncTask<String, Void, String>{
         String link;
-        private final String targetStartHTML = "<p>";
+        private final String targetStartHTML = "<p style=\"text-align: justify;\">";
+        private final String targetStartHTML2 = "<p>";
         private final String targetEndHTML = "</p>";
         public WebPageRetriever(String url){
             link = url;
@@ -63,64 +64,57 @@ public class HouseInfoActivity extends Activity {
             houseDesc = "";
             try {
                 URL url = new URL(link);
-
-                //HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                //connection.setDoInput(true);
-                //connection.connect();
                 BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream()));
                 String input;
                 //Essentially read input while there is still input to read
                 boolean readingHouseDesc = false;
-
                 while((input = br.readLine()) != null){
-                    if(input.contains(targetStartHTML)){
+                    if(input.contains(targetStartHTML) || input.contains(targetStartHTML2)){
                         readingHouseDesc = true;
                     }
                     if(readingHouseDesc) {
+
                         houseDesc += input;
                         if(input.contains(targetEndHTML)){
                             readingHouseDesc = false;
                         }
                     }
-                    //Log.i("House Desc printing", input);
                 }
-
                 br.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             return houseDesc;
         }
 
         @Override
         public void onPostExecute(String args){
-            //Objective: Parse the HTML given to us, remove the HTML from all <p> to </p>
-            houseDesc = houseDesc.replace(targetStartHTML,"").replace(targetEndHTML,"\n\n");
+            //Kinda proud of this - instead of removing any HTML from the String, why not load it into a WebView?
+            //The following lines use the String full of HTML to load it into a WebView.
+            WebView webView = (WebView) findViewById(R.id.webView);
+            webView.loadDataWithBaseURL("",houseDesc,"text/html","UTF-8","");
 
-            //Extract all the HTML from it, then use that as our house description
-            ((TextView) findViewById(R.id.houseDescription)).setText(houseDesc);
+            //Set the background for the WebView
+            webView.setBackgroundColor(0x00000000);
+            webView.setBackgroundResource(R.drawable.papyrus);
             //The image will take the longest to load, so after loading it, show everything and hide the progress bar
             findViewById(R.id.progressBar).setVisibility(View.GONE);
             findViewById(R.id.postLoadContent).setVisibility(View.VISIBLE);
+            findViewById(R.id.progressBar).setVisibility(View.GONE);
         }
 
     }
 
     private class ImageRetriever extends AsyncTask<String, Void, Bitmap> {
         String name;
-
-
         public ImageRetriever(String _name){
             name = _name;
         }
-
         @Override
         public void onPreExecute(){
             //While everything is loading, show a spinner
             findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
         }
-
         @Override
         public Bitmap doInBackground(String... _url) {
             String link = houseImageUrl;
@@ -142,23 +136,10 @@ public class HouseInfoActivity extends Activity {
         }
         @Override
         public void onPostExecute(Bitmap args){
-            //Update UI Elements here.
-
-            //Set all UI Elements here.
-            //First hide the Spinner
-            findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-
-
-
             //Add the image
             if(image!=null) {
                 ((ImageView) findViewById(R.id.houseImage)).setImageBitmap(image);
             }
-
-
-            //Until I find a better way of implementing it, we'll leave the description unmodified, for now.
-            //((TextView) findViewById(R.id.houseDescription)).setText(houseName);
-
 
         }
 

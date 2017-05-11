@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Settings values-->
+    <integer name="downtown_redlands">0</integer>
+    <integer name="last_point">1</integer>
+    <integer name="current_location">2</integer>
+</resources>

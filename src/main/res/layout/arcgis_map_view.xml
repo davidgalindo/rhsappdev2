@@ -10,7 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         mapoptions.MapType="Streets"
-        mapoptions.center="34.056215, -117.195668"
+        mapoptions.center="34.055569, -117.182538"
         mapoptions.ZoomLevel="18" />
 
     <android.support.design.widget.FloatingActionButton

@@ -5,4 +5,6 @@
     <color name="colorAccent">#f57c00</color>
     <color name="colorAccentSecondary">#bf360c</color>
     <color name="colorSpinner">#4a148c</color>
+    <color name="colorCopyright">#8c9eff</color>
+    <color name="colorTransparent">#00000000</color>
 </resources>

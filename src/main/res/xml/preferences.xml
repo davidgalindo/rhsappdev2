@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Preferences we need (Fill in this list as we go)
+Starting point: Start at Redlands(Downtown), Last Location, Current Location
+New houses added notification
+Basemap type(?)
+
+-->
+<PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/nav"
+        android:key="pref_nav_settings"
+        >
+
+        <ListPreference
+            android:key="starting_point"
+            android:title="@string/starting_point"
+            android:summary="@string/starting_point_desc"
+            android:entries="@array/starting_point_array"
+            android:entryValues="@array/starting_point_array_values"
+            android:defaultValue="0"
+
+            />
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/notifications"
+        android:key="pref_notification_settings"
+        >
+        <CheckBoxPreference
+            android:key="new_houses_added"
+            android:title="@string/new_houses_added"
+            android:summary="@string/new_houses_added_desc"
+            android:defaultValue="true"
+            />
+
+        </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/misc"
+        android:key="pref_misc_settings"
+        >
+            <Preference
+                android:title="@string/credits"
+                android:summary="@string/credits_desc"
+                >
+                    <intent
+                        android:action="android.intent.action.VIEW"
+                        android:targetPackage="davidgalindo.rhsexplore"
+                        android:targetClass="davidgalindo.rhsexplore.AboutActivity"/>
+
+            </Preference>
+
+
+        </PreferenceCategory>
+
+</PreferenceScreen>

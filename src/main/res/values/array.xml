@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="starting_point_array">
+        <item>@string/downtown_redlands</item>
+        <item>@string/current_location</item>
+    </string-array>
+    <string-array name="starting_point_array_values">
+        <item>downtown</item>
+        <item>currentlocation</item>
+    </string-array>
+
+</resources>
