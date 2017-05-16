@@ -2,27 +2,54 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/mainMap"
-            android:title="Main Map"
-            android:icon="@drawable/ic_map_black_24dp"
-            android:checked="true"
-            />
-        <item
-            android:id="@+id/houseList"
-            android:title="House List"
-            android:icon="@drawable/ic_map_black_24dp"
-            />
-        <item
-            android:id="@+id/faqMenu"
-            android:title="FAQ"
-            android:icon="@drawable/ic_question_answer_black_24dp"
-            />
-        <item
-            android:id="@+id/settingsMenu"
-            android:title="Settings"
-            android:icon="@drawable/ic_settings_black_24dp"
-            />
+
+        <item android:title="@string/my_map">
+            <menu>
+                <group android:checkableBehavior="single">
+                    <item
+                        android:id="@+id/mainMap"
+                        android:title="@string/main_map"
+                        android:icon="@drawable/ic_map_black_24dp"
+                        android:checked="true"
+                        />
+                    <item
+                        android:id="@+id/favorites"
+                        android:title="@string/my_favorites"
+                        android:icon="@drawable/ic_favorite_black_24dp"
+
+                        />
+                    <item
+                        android:id="@+id/recents"
+                        android:title="@string/recents"
+                        android:icon="@drawable/ic_schedule_black_24dp"
+                        />
+
+                    <item
+                        android:id="@+id/houseList"
+                        android:title="@string/house_list"
+                        android:icon="@drawable/ic_home_black_24dp"
+                        />
+                </group>
+            </menu>
+        </item>
+
+        <item android:title="@string/other">
+            <menu>
+                <group android:checkableBehavior="single">
+                    <item
+                        android:id="@+id/faqMenu"
+                        android:title="@string/faq"
+                        android:icon="@drawable/ic_question_answer_black_24dp"
+                        />
+                    <item
+                        android:id="@+id/settingsMenu"
+                        android:title="@string/settings"
+                        android:icon="@drawable/ic_settings_black_24dp"
+                        />
+                </group>
+            </menu>
+        </item>
+
 
     </group>
 </menu>

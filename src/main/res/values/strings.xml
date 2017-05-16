@@ -7,14 +7,30 @@
     <string name="retry">Retry</string>
     <string name="exit">Exit</string>
 
+    <!--Navigation Bar Strings-->
+    <string name="main_map">Main Map</string>
+    <string name="house_list">House List</string>
+    <string name="faq">FAQ</string>
+    <string name="my_favorites">My Favorites</string>
+    <string name="recents">Recents</string>
+    <string name="my_map">My Map</string>
+    <string name="other">Other</string>
+
     <!-- Settings Strings -->
     <string name="settings">Settings</string>
+    <string name="personalization">Personalization</string>
+    <string name="recent_list_size">Recent List Size</string>
+    <string name="recent_list_size_desc">Adjust the size of your recently viewed houses</string>
+    <string name="clear_recents">Clear recents list</string>
+    <string name="clear_favorites">Clear favorites</string>
+
     <string name="nav">Navigation</string>
     <string name="starting_point">Starting point</string>
         <string name="starting_point_desc">Choose where to start the map upon opening the app</string>
         <string name="last_point">Last point</string>
         <string name="downtown_redlands">Downtown Redlands</string>
         <string name="current_location">Current location</string>
+
     <string name="notifications">Notifications</string>
     <string name="new_houses_added">New Houses Added</string>
     <string name="new_houses_added_desc">Sends a notification when new houses are added to the database</string>
@@ -22,7 +38,13 @@
     <string name="misc">Miscellaneous</string>
     <string name="credits">Credits</string>
     <string name="credits_desc">Meet the awesome people behind the app</string>
+    <string name="donate">Purchase an RAHS Membership</string>
+    <string name="donate_desc">Your support really helps!</string>
 
+
+    <!--Social Strings-->
+    <string name="share_prefix">"Check out this cool building in Redlands!\n"</string>
+    <string name="share_using">Share using...</string>
 
     <!--Credits Strings-->
     <string name="data_credits">

@@ -8,6 +8,13 @@ Basemap type(?)
 -->
 <PreferenceScreen  xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
+        android:title="@string/personalization"
+        android:key="@string/personalization">
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="@string/nav"
         android:key="pref_nav_settings"
         >
@@ -39,6 +46,15 @@ Basemap type(?)
         android:title="@string/misc"
         android:key="pref_misc_settings"
         >
+            <Preference
+                android:title="@string/donate"
+                android:key="donate"
+                android:summary="@string/donate_desc"
+                >
+                <intent android:action="android.intent.action.VIEW"
+                    android:data="http://rahs.org/membership/" />
+
+            </Preference>
             <Preference
                 android:title="@string/credits"
                 android:summary="@string/credits_desc"

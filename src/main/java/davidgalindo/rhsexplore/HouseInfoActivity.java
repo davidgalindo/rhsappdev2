@@ -1,30 +1,38 @@
 package davidgalindo.rhsexplore;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 
 /**
  * Created by David on 5/3/2017.
  */
 
-public class HouseInfoActivity extends Activity {
+public class HouseInfoActivity extends Activity{
     String houseName;
     String houseAddress;
     String houseBuiltAwarded;
@@ -32,9 +40,18 @@ public class HouseInfoActivity extends Activity {
     Bitmap image;
     String houseDesc;
     String websiteURL;
+    String houseCoords;
+    SharedPreferences sp;
+    JSONArray jsonRecents;
+    long houseId;
 
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        //We pull up SharedPreferences here to see if we have an initial JSON String
+        sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+
+
+
         setContentView(R.layout.house_preview);
         Bundle intentBundle = getIntent().getExtras();
         houseName =  intentBundle.getString("houseName");
@@ -42,6 +59,8 @@ public class HouseInfoActivity extends Activity {
         houseBuiltAwarded = intentBundle.getString("houseBuiltAwarded");
         houseImageUrl = intentBundle.getString("houseImgUrl");
         websiteURL = intentBundle.getString("websiteURL");
+        houseCoords = intentBundle.getString("houseCoords");
+        houseId = intentBundle.getLong("houseId");
         //Modify the text values
         ((TextView) findViewById(R.id.houseName)).setText(houseName);
         ((TextView) findViewById(R.id.houseAddress)).setText(houseAddress);
@@ -50,7 +69,48 @@ public class HouseInfoActivity extends Activity {
         //Execute AsyncTasks
         new WebPageRetriever(websiteURL).execute();
         new ImageRetriever(houseImageUrl).execute();
+        addToRecentsArray();
+
     }
+
+    private void addToRecentsArray(){
+        //The string representing our JSON array for our recents list
+        String jsonRecentsString = sp.getString("jsonRecents","");
+        try{
+            //Keeps track of whether the value is already in the array
+            boolean notInArray = true;
+            //Create the array - if it doesn't exist, create it
+            if(jsonRecentsString.equals("")) {
+                jsonRecents = new JSONArray();
+            }else{
+                jsonRecents = new JSONArray(jsonRecentsString);
+            }
+            if(jsonRecents.length() >= sp.getInt("recentsSize",5)){//Default size of 15
+                //If the array is larger than the recentsSize, remove the first element
+                jsonRecents.remove(0);
+            }
+            for(int count=0; count<jsonRecents.length();count++){
+                JSONObject o = (JSONObject) jsonRecents.get(count);
+                long value = o.getLong("id");
+                if(value == houseId){
+                    notInArray = false;
+                }
+            }
+            //Now we add the object to the json list as a recent
+            if(notInArray) {
+                JSONObject object = new JSONObject();
+                object.put("id", houseId);
+                jsonRecents.put(object);
+
+                //Then we save the jsonArray to the SharedPreferences
+                sp.edit().putString("jsonRecents", jsonRecents.toString()).apply();
+                Log.i("json",jsonRecents.toString());
+            }
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+    }
+
     private class WebPageRetriever extends  AsyncTask<String, Void, String>{
         String link;
         private final String targetStartHTML = "<p style=\"text-align: justify;\">";
@@ -100,7 +160,7 @@ public class HouseInfoActivity extends Activity {
             //The image will take the longest to load, so after loading it, show everything and hide the progress bar
             findViewById(R.id.progressBar).setVisibility(View.GONE);
             findViewById(R.id.postLoadContent).setVisibility(View.VISIBLE);
-            findViewById(R.id.progressBar).setVisibility(View.GONE);
+
         }
 
     }
@@ -143,5 +203,33 @@ public class HouseInfoActivity extends Activity {
 
         }
 
+    }
+
+    /**Onclick Methods**/
+    public void onDirectionsClick(View view){
+
+        //Format the uri so that it can be interperetd by Google Maps and other Navigation apps
+        String uri = "geo:0,0?q=" + houseCoords + "&addr=" + houseAddress +",Redlands,CA";
+        Toast.makeText(getApplicationContext(),uri,Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(
+                Intent.ACTION_VIEW, Uri.parse(uri)
+        );
+        startActivity(intent);
+
+    }
+
+    public void onFavoriteClick(View view){
+        Toast.makeText(getApplicationContext(),"Added to favorites!",Toast.LENGTH_SHORT).show();
+    }
+
+    public void onShareClick(View view){
+        //
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_TEXT, getResources().getString(R.string.share_prefix) + websiteURL);
+        intent.setType("text/plain");
+        startActivity(
+                Intent.createChooser(intent,getResources().getString(R.string.share_using))
+        );
     }
 }

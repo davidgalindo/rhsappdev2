@@ -50,42 +50,78 @@
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/houseAddress"
+            <LinearLayout
+                android:id="@+id/houseData"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/houseName"
-                android:text="@string/testAddress"
-                android:textAlignment="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                android:layout_below="@+id/houseName"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/houseBuiltAwarded"
+                <TextView
+                    android:id="@+id/houseAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/houseName"
+                    android:paddingLeft="10sp"
+                    android:text="@string/testAddress"
+                    android:textAlignment="center"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+                <TextView
+                    android:id="@+id/houseBuiltAwarded"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/houseAddress"
+                    android:paddingLeft="10sp"
+                    android:text="@string/testBuildAwarded"
+                    android:textAlignment="center"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/buttonRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/houseAddress"
-                android:text="@string/testBuildAwarded"
-                android:textAlignment="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+                android:layout_below="@+id/houseData"
+                android:orientation="horizontal"
+                android:visibility="visible">
 
+                <ImageView
+                    android:id="@+id/favoriteBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="favorite"
+                    android:onClick="onFavoriteClick"
+                    android:src="@drawable/ic_favorite_border_black_36dp" />
 
-            <!--<TextView
-                android:id="@+id/houseDescription"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/houseBuiltAwarded"
-                android:background="@drawable/papyrus"
-                android:fontFamily="sans-serif"
-                android:lineSpacingExtra="4sp"
-                android:text="@string/testDescription"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1" />-->
+                <ImageView
+                    android:id="@+id/directionsBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onDirectionsClick"
+                    android:src="@drawable/ic_directions_car_black_36dp" />
+
+                <ImageView
+                    android:id="@+id/shareBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onShareClick"
+                    android:src="@drawable/ic_share_black_36dp" />
+
+            </LinearLayout>
+
             <WebView
                 android:id="@+id/webView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/houseBuiltAwarded"
+                android:layout_below="@+id/buttonRow"
                 android:background="@drawable/papyrus"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body1">
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:visibility="visible">
 
             </WebView>
         </RelativeLayout>

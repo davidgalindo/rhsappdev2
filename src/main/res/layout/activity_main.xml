@@ -12,9 +12,9 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
         android:orientation="vertical"
-        android:visibility="gone"
-
         android:translationZ="1dp"
+
+        android:visibility="visible"
         tools:context="davidgalindo.rhsexplore.MainActivity">
 
 
@@ -26,9 +26,10 @@
     </LinearLayout>
 
     <RelativeLayout
+        android:id="@+id/loadingScreen"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/loadingScreen">
+        android:visibility="gone">
 
         <ImageView
             android:id="@+id/companyLogo"
@@ -37,11 +38,12 @@
             android:layout_centerInParent="true"
             android:adjustViewBounds="true"
             android:src="@drawable/logo" />
+
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_below="@id/companyLogo"/>
+            android:layout_below="@id/companyLogo"
+            android:layout_centerHorizontal="true" />
     </RelativeLayout>
 
    <!-- <com.esri.arcgisruntime.mapping.view.MapView android:id="@+id/mapView"

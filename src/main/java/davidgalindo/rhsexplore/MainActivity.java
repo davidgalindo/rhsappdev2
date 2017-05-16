@@ -7,9 +7,13 @@ import android.app.FragmentTransaction;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 
 
@@ -24,17 +28,24 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.esri.android.map.FeatureLayer;
+import com.esri.android.map.GraphicsLayer;
+import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
+import com.esri.core.map.CallbackListener;
+import com.esri.core.table.FeatureTable;
+
 /**
  * TODO: (no particular order priority)
- * Add Navigation (ie. directions from current location to desired house)
- * Have this app receive Intents (eg. from an external link, perhaps by name/id/coordinates) to directly link to a house
- * Implement search/sort/display functionality (by decade, building type, etc.)
- * Social Features - Star a favorite house, share house to FB/Twitter, etc.
+ * (Handled by 3rd party app intent) === Add Navigation (ie. directions from current location to desired house)
+ * (See below, but working) === Have this app receive Intents (eg. from an external link, perhaps by name/id/coordinates) to directly link to a house
+ * (Work in Progress, share working) Social Features - Favorite a favorite house, recents list, share house to FB/Twitter, etc.
+ * (Working) === Check for Internet connectivity upon boot
  * Make FAQ
+ * Implement search/sort/display functionality (by decade, building type, etc.)
  * Adjust layout for larger screens
- * (*) Check for Internet connectivity upon boot
+
  * Add polish (nicer basemap, better icons)
- * TODO: End ToDo list
+ * TODO: End Todo list
  * **/
 
 
@@ -45,12 +56,12 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView nvDrawer;
     private ActionBarDrawerToggle drawerToggle;
     private MainMapFragment mainMapFragment;
+    private GeodatabaseFeatureServiceTable ft;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         //Create references to drawer, toolbar, etc.
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         nvDrawer = (NavigationView) findViewById(R.id.nvView);
@@ -60,10 +71,41 @@ public class MainActivity extends AppCompatActivity {
         t.setNavigationIcon(R.drawable.ic_list_white_24dp);
         setSupportActionBar(t);
         setupDrawerContent(nvDrawer);
+        //Initialize the mapFragment
+        mainMapFragment = new MainMapFragment();
 
         //Check for internet first, then proceed only if internet was found.
         checkForInternet();
+        //Now we check to see if we have an intent coming in
+        checkForIntent();
+        //From here, we initialize our FeatureLayers
+        initializeFeatureLayers();
+        //Then we start the fragment transcation
+        initialFragmentTransaction();
+    }
 
+    private void initializeFeatureLayers(){
+        ft = new GeodatabaseFeatureServiceTable("http://services7.arcgis.com/bRDoEnap5EYRc1GS/ArcGIS/rest/services/Houses/FeatureServer", 0);
+        //Now we gotta initialize the Table to make sure our data is accessed correctly.
+        ft.initialize(new CallbackListener<GeodatabaseFeatureServiceTable.Status>() {
+            @Override
+            public void onCallback(GeodatabaseFeatureServiceTable.Status status) {
+                if (status == GeodatabaseFeatureServiceTable.Status.INITIALIZED) { //eg. A success
+                    Log.i("FeatureLayer", "success");
+                    mainMapFragment.addFeatureAndGraphicLayer(ft);
+
+                    //If this was a success, then we show/hide the UI
+                    findViewById(R.id.loadingScreen).setVisibility(View.GONE);
+                    findViewById(R.id.activity_main_menu).setVisibility(View.VISIBLE);
+
+
+                }
+            }
+            @Override
+            public void onError(Throwable throwable) {
+                Toast.makeText(getApplicationContext(), "Error while loading data. Please try again later.", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void initialFragmentTransaction(){
@@ -72,13 +114,34 @@ public class MainActivity extends AppCompatActivity {
         //Initial fragment
         FragmentManager fm = getFragmentManager();
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
-
-        mainMapFragment = new MainMapFragment();
         fragmentTransaction.add(R.id.contentFrame,mainMapFragment).commit();
+    }
 
-        //Once we're done, show the UI
-        findViewById(R.id.loadingScreen).setVisibility(View.GONE);
-        findViewById(R.id.activity_main_menu).setVisibility(View.VISIBLE);
+    private String checkForIntent(){
+        /**Allows the app to receive intents from the website.
+         * eg, we got ohttp://rahs.org/awards/Elizabeth-Marshall-House/ and it can open up the appropriate
+         * page inside the app.
+         * We need to upload a file to the website first, so we can't do any work here, yet.
+         * **/
+        Intent appLinkIntent = getIntent();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if(appLinkIntent == null) { //No incoming intent, do nothing
+            sp.edit().putString("startURL","").commit();
+            return null;
+        }
+        String appLinkAction = appLinkIntent.getAction();
+        Uri appLinkData = appLinkIntent.getData();
+        if(appLinkData == null) {
+            sp.edit().putString("startURL","").commit();
+            return null;
+        }
+        sp.edit().putString("startURL",appLinkData.toString()).commit();
+        return appLinkData.toString();
+    }
+
+    //Get the FeatureTable for use in all Fragments
+    public GeodatabaseFeatureServiceTable getFeatureTable(){
+        return ft;
     }
 
     private void checkForInternet(){
@@ -103,10 +166,6 @@ public class MainActivity extends AppCompatActivity {
         if (ni == null || !ni.isConnected()) {//ie. internet is  not available
             Log.i("Connectivity","No internet");
             dialog.show();
-        }
-        else
-        {
-            initialFragmentTransaction();
         }
 
     }
@@ -167,12 +226,20 @@ public class MainActivity extends AppCompatActivity {
                 //fragmentClass = HouseListFragment.class
                 Toast.makeText(getApplicationContext(),"Open House List menu!",Toast.LENGTH_SHORT).show();
                 break;
+            case R.id.favorites:
+                //fragmentClass = FavoritesFragment.class;
+                Toast.makeText(getApplicationContext(),"Open Favorites menu!",Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.recents:
+                fragment = new RecentsFragment();
+                Toast.makeText(getApplicationContext(),"Open Recents menu!",Toast.LENGTH_SHORT).show();
+                break;
             default:
                 fragment = mainMapFragment;
         }
 
         if(fragment!= null) {
-            fragmentTransaction.replace(R.id.contentFrame,fragment).commit();
+            fragmentTransaction.replace(R.id.contentFrame,fragment).setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN).commit();
         }
         // Highlight the selected item has been done by NavigationView
         menuItem.setChecked(true);
