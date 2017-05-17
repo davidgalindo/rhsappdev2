@@ -20,16 +20,16 @@ import org.json.JSONException;
  * Created by David on 5/15/2017.
  */
 
-public class RecentsFragment extends Fragment {
+public class FavoritesFragment extends Fragment {
     private ListView view;
-    private JSONArray recentsArray;
+    private JSONArray favoritesArray;
     private SharedPreferences sp;
     private GeodatabaseFeatureServiceTable ft;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState){
-        view = (ListView) inflater.inflate(R.layout.recents_fragment,container,false);
+        view = (ListView) inflater.inflate(R.layout.favorites_fragment,container,false);
         return view;
     }
 
@@ -40,23 +40,22 @@ public class RecentsFragment extends Fragment {
         sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
         //Grab our JSONArray for parsing
         try{
-            recentsArray = new JSONArray(sp.getString("jsonRecents",""));
-
-            Log.i("recents",recentsArray.toString());
-            if(recentsArray.length() == 0){//eg. no values
-                Toast.makeText(getActivity().getApplicationContext(),"No recents.",Toast.LENGTH_LONG).show();
+            favoritesArray = new JSONArray(sp.getString("jsonFavorites",""));
+            if(favoritesArray.length() == 0){//eg. no values
+                Toast.makeText(getActivity().getApplicationContext(),"No favorites.",Toast.LENGTH_LONG).show();
                 //Do UI work here, or make another method for it
                 return;
             }
 
-            //Note: display these backwards, eg. start at the end of the list (most recent item)
+            Log.i("favorites",favoritesArray.toString());
+            //Note: allow the user to rearrange objects in this list, and update the arrayList accordingly (a simple swap)
 
             //Inflate a view for each, asking the FeatureTable for information through the house ID
             ft = ((MainActivity)getActivity()).getFeatureTable();
-            Log.i("recents","Feature Table is null? " + (ft==null));
+            Log.i("favorites","Feature Table is null? " + (ft==null));
         }catch(JSONException e){
             e.printStackTrace();
-            Toast.makeText(getActivity().getApplicationContext(),"Error while getting recents, please try again later!",Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity().getApplicationContext(),"Error while getting favorites, please try again later!",Toast.LENGTH_LONG).show();
         }
     }
 

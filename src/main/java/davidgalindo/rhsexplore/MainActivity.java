@@ -8,12 +8,14 @@ import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 
 
@@ -31,19 +33,19 @@ import android.widget.Toast;
 import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
 import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
+import com.esri.core.geometry.Point;
 import com.esri.core.map.CallbackListener;
 import com.esri.core.table.FeatureTable;
 
 /**
  * TODO: (no particular order priority)
  * (Handled by 3rd party app intent) === Add Navigation (ie. directions from current location to desired house)
- * (See below, but working) === Have this app receive Intents (eg. from an external link, perhaps by name/id/coordinates) to directly link to a house
- * (Work in Progress, share working) Social Features - Favorite a favorite house, recents list, share house to FB/Twitter, etc.
+ * (Working) === Have this app receive Intents (eg. from an external link, perhaps by name/id/coordinates) to directly link to a house
+ * (Sean's part, share working) Social Features - Favorite a favorite house, recents list, share house to FB/Twitter, etc.
  * (Working) === Check for Internet connectivity upon boot
  * Make FAQ
  * Implement search/sort/display functionality (by decade, building type, etc.)
  * Adjust layout for larger screens
-
  * Add polish (nicer basemap, better icons)
  * TODO: End Todo list
  * **/
@@ -57,11 +59,30 @@ public class MainActivity extends AppCompatActivity {
     private ActionBarDrawerToggle drawerToggle;
     private MainMapFragment mainMapFragment;
     private GeodatabaseFeatureServiceTable ft;
+    private GraphicsLayer gl;
+    private Point lastPoint;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        //Present the Splash Screen to the user while the app loads
+        //TODO: make it look better
+        setTheme(R.style.SplashTheme);
+        //Check for internet first, then proceed only if internet was found.
+        checkForInternet();
+        //Now we check to see if we have an intent coming in
+        checkForIntent();
+        //Initialize the mapFragment
+        mainMapFragment = new MainMapFragment();
+        //From here, we initialize our FeatureLayers
+        initializeFeatureLayers();
+        gl = new GraphicsLayer();
+
+        //Once that's all done with, initialize our layout and content
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
         //Create references to drawer, toolbar, etc.
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         nvDrawer = (NavigationView) findViewById(R.id.nvView);
@@ -71,17 +92,14 @@ public class MainActivity extends AppCompatActivity {
         t.setNavigationIcon(R.drawable.ic_list_white_24dp);
         setSupportActionBar(t);
         setupDrawerContent(nvDrawer);
-        //Initialize the mapFragment
-        mainMapFragment = new MainMapFragment();
+    }
 
-        //Check for internet first, then proceed only if internet was found.
-        checkForInternet();
-        //Now we check to see if we have an intent coming in
-        checkForIntent();
-        //From here, we initialize our FeatureLayers
-        initializeFeatureLayers();
-        //Then we start the fragment transcation
-        initialFragmentTransaction();
+
+    public Point getPoint(){
+        return lastPoint;
+    }
+    public void setPoint(Point p ){
+        lastPoint = p;
     }
 
     private void initializeFeatureLayers(){
@@ -92,12 +110,11 @@ public class MainActivity extends AppCompatActivity {
             public void onCallback(GeodatabaseFeatureServiceTable.Status status) {
                 if (status == GeodatabaseFeatureServiceTable.Status.INITIALIZED) { //eg. A success
                     Log.i("FeatureLayer", "success");
-                    mainMapFragment.addFeatureAndGraphicLayer(ft);
+                    //mainMapFragment.addFeatureAndGraphicLayer(ft);
 
                     //If this was a success, then we show/hide the UI
-                    findViewById(R.id.loadingScreen).setVisibility(View.GONE);
-                    findViewById(R.id.activity_main_menu).setVisibility(View.VISIBLE);
 
+                    initialFragmentTransaction();
 
                 }
             }
@@ -126,16 +143,15 @@ public class MainActivity extends AppCompatActivity {
         Intent appLinkIntent = getIntent();
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if(appLinkIntent == null) { //No incoming intent, do nothing
-            sp.edit().putString("startURL","").commit();
+            sp.edit().putString("startURL","").apply();
             return null;
         }
-        String appLinkAction = appLinkIntent.getAction();
         Uri appLinkData = appLinkIntent.getData();
         if(appLinkData == null) {
-            sp.edit().putString("startURL","").commit();
+            sp.edit().putString("startURL","").apply();
             return null;
         }
-        sp.edit().putString("startURL",appLinkData.toString()).commit();
+        sp.edit().putString("startURL",appLinkData.toString()).apply();
         return appLinkData.toString();
     }
 
@@ -143,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
     public GeodatabaseFeatureServiceTable getFeatureTable(){
         return ft;
     }
+    public GraphicsLayer getGraphicsLayer(){return gl;}
 
     private void checkForInternet(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -208,7 +225,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Create a new fragment and specify the fragment to show based on nav item clicked
         Fragment fragment = null;
-        menuItem.getItemId();
         FragmentManager fm = getFragmentManager();
         FragmentTransaction fragmentTransaction = fm.beginTransaction();
         switch(menuItem.getItemId()) {
@@ -223,16 +239,14 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),"Open FAQ menu!",Toast.LENGTH_SHORT).show();
                 break;
             case R.id.houseList:
-                //fragmentClass = HouseListFragment.class
+                //fragment = new HouseListFragment();
                 Toast.makeText(getApplicationContext(),"Open House List menu!",Toast.LENGTH_SHORT).show();
                 break;
             case R.id.favorites:
-                //fragmentClass = FavoritesFragment.class;
-                Toast.makeText(getApplicationContext(),"Open Favorites menu!",Toast.LENGTH_SHORT).show();
+                fragment = new FavoritesFragment();
                 break;
             case R.id.recents:
                 fragment = new RecentsFragment();
-                Toast.makeText(getApplicationContext(),"Open Recents menu!",Toast.LENGTH_SHORT).show();
                 break;
             default:
                 fragment = mainMapFragment;
@@ -263,6 +277,26 @@ public class MainActivity extends AppCompatActivity {
             setTitle(menuItem.getTitle());
         } else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults){
+        //Tell user to enable location services in case it was rejected
+        switch(requestCode){
+            case MainMapFragment.PERMISSION_ACCESS_FINE_LOCATION:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_DENIED){
+                    Toast.makeText(getApplicationContext(), "Please enable Location Services for this app first, then try again.",
+                            Toast.LENGTH_LONG).show();
+                }else if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){//Permission granted, yay! Let's get their location, then!
+                    try {
+                        mainMapFragment.beginGettingALocation();
+                    }catch(SecurityException e){
+                        e.printStackTrace();
+                    }
+                }
         }
     }
 

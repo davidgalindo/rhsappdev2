@@ -13,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,8 +51,6 @@ public class HouseInfoActivity extends Activity{
         //We pull up SharedPreferences here to see if we have an initial JSON String
         sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-
-
         setContentView(R.layout.house_preview);
         Bundle intentBundle = getIntent().getExtras();
         houseName =  intentBundle.getString("houseName");
@@ -70,15 +69,16 @@ public class HouseInfoActivity extends Activity{
         new WebPageRetriever(websiteURL).execute();
         new ImageRetriever(houseImageUrl).execute();
         addToRecentsArray();
+        checkIfInitiallyFavorite();
 
     }
 
     private void addToRecentsArray(){
         //The string representing our JSON array for our recents list
         String jsonRecentsString = sp.getString("jsonRecents","");
+        long matchIndex = -1;
         try{
             //Keeps track of whether the value is already in the array
-            boolean notInArray = true;
             //Create the array - if it doesn't exist, create it
             if(jsonRecentsString.equals("")) {
                 jsonRecents = new JSONArray();
@@ -89,15 +89,11 @@ public class HouseInfoActivity extends Activity{
                 //If the array is larger than the recentsSize, remove the first element
                 jsonRecents.remove(0);
             }
-            for(int count=0; count<jsonRecents.length();count++){
-                JSONObject o = (JSONObject) jsonRecents.get(count);
-                long value = o.getLong("id");
-                if(value == houseId){
-                    notInArray = false;
-                }
-            }
+
+            matchIndex = hasHouseId(jsonRecents,houseId);
+
             //Now we add the object to the json list as a recent
-            if(notInArray) {
+            if(matchIndex <= -1) {//Object not in Recents Array
                 JSONObject object = new JSONObject();
                 object.put("id", houseId);
                 jsonRecents.put(object);
@@ -105,7 +101,7 @@ public class HouseInfoActivity extends Activity{
                 //Then we save the jsonArray to the SharedPreferences
                 sp.edit().putString("jsonRecents", jsonRecents.toString()).apply();
                 Log.i("json",jsonRecents.toString());
-            }
+            }//We ignore it if it is in the recents array
         }catch(JSONException e){
             e.printStackTrace();
         }
@@ -219,9 +215,85 @@ public class HouseInfoActivity extends Activity{
     }
 
     public void onFavoriteClick(View view){
-        Toast.makeText(getApplicationContext(),"Added to favorites!",Toast.LENGTH_SHORT).show();
+        modifyFavorites();
     }
 
+    private void checkIfInitiallyFavorite(){
+        try{
+            String jsonFavoritesString = sp.getString("jsonFavorites","");
+            JSONArray jsonFavorites;
+            //Keeps track of whether the value is already in the array
+
+            //Create the array - if it doesn't exist, create it
+            if(jsonFavoritesString.equals("")) {
+                jsonFavorites = new JSONArray();
+            }else{
+                jsonFavorites = new JSONArray(jsonFavoritesString);
+            }
+            long matchIndex = hasHouseId(jsonFavorites,houseId);
+            if(matchIndex>-1){//eg. We're not changing the value and the object is in the array
+                //Then change the image to a filled heart instead and just return
+                ((ImageView)findViewById(R.id.favoriteBtn)).setImageResource(R.drawable.ic_favorite_black_36dp);
+            }
+
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    //Keeps track of whether the value is already in the array
+    private void modifyFavorites(){//responsible for manipulating favorites, if true
+        //If false, we simply change the favorites image accordingly
+        //The string representing our JSON array for our favorites list
+        String jsonFavoritesString = sp.getString("jsonFavorites","");
+        try{
+            JSONArray jsonFavorites;
+
+
+            //Create the array - if it doesn't exist, create it
+            if(jsonFavoritesString.equals("")) {
+                jsonFavorites = new JSONArray();
+            }else{
+                jsonFavorites = new JSONArray(jsonFavoritesString);
+            }
+            //Check to see if the house is already in the array
+            long matchIndex = hasHouseId(jsonFavorites,houseId);
+
+            //Now we add the object to the json list as a recent
+            if(matchIndex <= -1) { //Object not found, add the id here
+                //Change the view accordingly
+                ((ImageView)findViewById(R.id.favoriteBtn)).setImageResource(R.drawable.ic_favorite_black_36dp);
+                //Add it into the JSON array
+                JSONObject object = new JSONObject();
+                object.put("id", houseId);
+                jsonFavorites.put(object);
+
+                Toast.makeText(getApplicationContext(),"Added to favorites!",Toast.LENGTH_SHORT).show();
+            }else{//If the House is in the favorites array, remove it
+                jsonFavorites.remove((int)matchIndex);
+                Toast.makeText(getApplicationContext(),"Removed from favorites!",Toast.LENGTH_SHORT).show();
+                //Change the view accordingly
+                ((ImageView)findViewById(R.id.favoriteBtn)).setImageResource(R.drawable.ic_favorite_border_black_36dp);
+            }
+            //Save the changes in the StoredPreferences
+            sp.edit().putString("jsonFavorites", jsonFavorites.toString()).apply();
+            Log.i("json favorites",jsonFavorites.toString());
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+    }
+    private long hasHouseId(JSONArray array, long id) throws JSONException{
+        //Looks up a house ID within the given array; returns -1 if nothing is found
+        for(int count=0; count<array.length();count++){
+            JSONObject o = (JSONObject) array.get(count);
+            long value = o.getLong("id");
+            if(value == id){
+                return count; //returns the index value if found
+            }
+        }
+        //If not found, returns a -1
+        return -1;
+    }
     public void onShareClick(View view){
         //
         Intent intent = new Intent();
