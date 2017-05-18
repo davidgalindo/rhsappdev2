@@ -19,7 +19,8 @@
         android:theme="@style/AppTheme"
         >
         <activity android:name="davidgalindo.rhsexplore.MainActivity"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/SplashTheme"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,7 +39,14 @@
             </intent-filter>
         </activity>
         <activity
+            android:name="davidgalindo.rhsexplore.WelcomeActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme"
+            />
+
+        <activity
             android:name="davidgalindo.rhsexplore.HouseInfoActivity"
+            android:screenOrientation="portrait"
             android:parentActivityName="davidgalindo.rhsexplore.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -46,6 +54,7 @@
         </activity>
         <activity
             android:name="davidgalindo.rhsexplore.AboutActivity"
+            android:screenOrientation="portrait"
             android:parentActivityName="davidgalindo.rhsexplore.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

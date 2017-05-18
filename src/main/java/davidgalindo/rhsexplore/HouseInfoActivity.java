@@ -2,13 +2,11 @@ package davidgalindo.rhsexplore;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 
 import android.util.Log;
 import android.view.View;
@@ -29,6 +27,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
+
 /**
  * Created by David on 5/3/2017.
  */
@@ -42,14 +42,14 @@ public class HouseInfoActivity extends Activity{
     String houseDesc;
     String websiteURL;
     String houseCoords;
-    SharedPreferences sp;
+    SharedPreferenceManager sp;
     JSONArray jsonRecents;
     long houseId;
 
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         //We pull up SharedPreferences here to see if we have an initial JSON String
-        sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sp = new SharedPreferenceManager(getApplicationContext());
 
         setContentView(R.layout.house_preview);
         Bundle intentBundle = getIntent().getExtras();
@@ -75,8 +75,11 @@ public class HouseInfoActivity extends Activity{
 
     private void addToRecentsArray(){
         //The string representing our JSON array for our recents list
-        String jsonRecentsString = sp.getString("jsonRecents","");
-        long matchIndex = -1;
+        String jsonRecentsString = sp.getJSONRecents();
+        Log.i("jsonrecents",jsonRecentsString);
+        long matchIndex;
+        int recentsSize = sp.getJSONRecentsSize();
+
         try{
             //Keeps track of whether the value is already in the array
             //Create the array - if it doesn't exist, create it
@@ -85,11 +88,21 @@ public class HouseInfoActivity extends Activity{
             }else{
                 jsonRecents = new JSONArray(jsonRecentsString);
             }
-            if(jsonRecents.length() >= sp.getInt("recentsSize",5)){//Default size of 15
-                //If the array is larger than the recentsSize, remove the first element
-                jsonRecents.remove(0);
-            }
+            if(recentsSize == 0){//If no recents are desired, return here
+                //Clear the array, if it exists
+                while(jsonRecents.length() > 0){
 
+                    jsonRecents.remove(0);
+                }
+                sp.setJSONRecents("");
+                return;
+            }
+            if(jsonRecents.length() >= recentsSize){//Default size of 15
+                //If the array is larger than the recentsSize, remove the first element
+                while(jsonRecents.length() >= recentsSize){
+                    jsonRecents.remove(0);//Remove all first elements until the size is correct
+                }
+            }
             matchIndex = hasHouseId(jsonRecents,houseId);
 
             //Now we add the object to the json list as a recent
@@ -99,7 +112,8 @@ public class HouseInfoActivity extends Activity{
                 jsonRecents.put(object);
 
                 //Then we save the jsonArray to the SharedPreferences
-                sp.edit().putString("jsonRecents", jsonRecents.toString()).apply();
+                sp.setJSONRecents(jsonRecents.toString());
+
                 Log.i("json",jsonRecents.toString());
             }//We ignore it if it is in the recents array
         }catch(JSONException e){
@@ -220,7 +234,8 @@ public class HouseInfoActivity extends Activity{
 
     private void checkIfInitiallyFavorite(){
         try{
-            String jsonFavoritesString = sp.getString("jsonFavorites","");
+            sp.getJSONFavorites();
+            String jsonFavoritesString = sp.getJSONFavorites();
             JSONArray jsonFavorites;
             //Keeps track of whether the value is already in the array
 
@@ -245,7 +260,7 @@ public class HouseInfoActivity extends Activity{
     private void modifyFavorites(){//responsible for manipulating favorites, if true
         //If false, we simply change the favorites image accordingly
         //The string representing our JSON array for our favorites list
-        String jsonFavoritesString = sp.getString("jsonFavorites","");
+        String jsonFavoritesString = sp.getJSONFavorites();
         try{
             JSONArray jsonFavorites;
 
@@ -276,7 +291,7 @@ public class HouseInfoActivity extends Activity{
                 ((ImageView)findViewById(R.id.favoriteBtn)).setImageResource(R.drawable.ic_favorite_border_black_36dp);
             }
             //Save the changes in the StoredPreferences
-            sp.edit().putString("jsonFavorites", jsonFavorites.toString()).apply();
+            sp.setJSONFavorites(jsonFavorites.toString());
             Log.i("json favorites",jsonFavorites.toString());
         }catch(JSONException e){
             e.printStackTrace();

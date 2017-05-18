@@ -1,6 +1,23 @@
 <resources>
-    <string name="app_name">RHS Explore</string>
+    <string name="app_name">RAHS Explore</string>
     <string name="app_ver">Version 1.0.0</string>
+
+    <!--Welcome Strings -->
+    <string name="welcome">Welcome to RAHS Explore</string>
+    <string name="welcome_desc">Helping you explore Redlands\' historic buildings</string>
+    <string name="house_usage">Look around for houses</string>
+    <string name="house_usage_desc">Tap a house to see its name and to get more information</string>
+    <string name="house_usage_hint">Hint: The orange location button will center the map at your current location</string>
+    <string name="button_row">Share, favorite, or navigate</string>
+    <string name="button_row_desc">Tap the heart to favorite, the car to navigate, or the link to share</string>
+    <string name="location_usage">Houses around you</string>
+    <string name="location_usage_desc">The orange location button on the map will center the map at your current location</string>
+    <string name="conclusion">Have fun exploring!</string>
+    <string name="conclusion_desc">Tap the drawer icon for favorites and settings</string>
+    <string name="skip_btn">Skip</string>
+    <string name="next_btn">Next</string>
+    <string name="ok_btn">OK</string>
+
 
     <!--Alert String-->
     <string name="no_internet">No Internet connection was detected. Connect to the internet and try again.</string>
@@ -36,6 +53,8 @@
     <string name="new_houses_added_desc">Sends a notification when new houses are added to the database</string>
 
     <string name="misc">Miscellaneous</string>
+    <string name="view_help">View help slides</string>
+    <string name="view_help_desc">Review the basics of the app</string>
     <string name="credits">Credits</string>
     <string name="credits_desc">Meet the awesome people behind the app</string>
     <string name="donate">Purchase an RAHS Membership</string>

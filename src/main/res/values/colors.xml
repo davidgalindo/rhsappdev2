@@ -2,10 +2,33 @@
 <resources>
     <color name="colorPrimary">#424242</color>
     <color name="colorPrimaryDark">#000000</color>
-    <color name="colorAccent">#f57c00</color>
+    <color name="colorAccent">#ffab40</color>
     <color name="colorAccentSecondary">#bf360c</color>
     <color name="colorSpinner">#4a148c</color>
     <color name="colorCopyright">#8c9eff</color>
     <color name="colorTransparent">#00000000</color>
     <color name="white">#FFFFFF</color>
+
+    <!--Welcome colors-->
+    <color name="colorWelcome1">#9ccc65</color>
+    <color name="colorWelcome2">#26c6da</color>
+    <color name="colorWelcome3">#ab47bc</color>
+    <color name="colorWelcome4">#ff5252</color>
+    <color name="colorWelcome5">#ffab40</color>
+
+    <array name="colorActive">
+        <item name="colorWelcome1DotSelected">#7cb342</item>
+        <item name="colorWelcome2DotSelected">#00acc1</item>
+        <item name="colorWelcome3DotSelected">#9c27b0</item>
+        <item name="colorWelcome4DotSelected">#e53935</item>
+        <item name="colorWelcome5DotSelected">#ef6c00</item>
+    </array>
+
+    <array name="colorInactive">
+        <item name="colorWelcome1DotUnselected">#255009</item>
+        <item name="colorWelcome2DotUnselected">#006064</item>
+        <item name="colorWelcome3DotUnselected">#7b1fa2</item>
+        <item name="colorWelcome4DotUnselected">#b53838</item>
+        <item name="colorWelcome5DotUnselected">#bf360c</item>
+    </array>
 </resources>

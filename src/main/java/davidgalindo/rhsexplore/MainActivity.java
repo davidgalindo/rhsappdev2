@@ -7,14 +7,12 @@ import android.app.FragmentTransaction;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 
@@ -37,16 +35,18 @@ import com.esri.core.geometry.Point;
 import com.esri.core.map.CallbackListener;
 import com.esri.core.table.FeatureTable;
 
+import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
+
 /**
  * TODO: (no particular order priority)
  * (Handled by 3rd party app intent) === Add Navigation (ie. directions from current location to desired house)
  * (Working) === Have this app receive Intents (eg. from an external link, perhaps by name/id/coordinates) to directly link to a house
  * (Sean's part, share working) Social Features - Favorite a favorite house, recents list, share house to FB/Twitter, etc.
  * (Working) === Check for Internet connectivity upon boot
- * Make FAQ
- * Implement search/sort/display functionality (by decade, building type, etc.)
- * Adjust layout for larger screens
- * Add polish (nicer basemap, better icons)
+ * (Working, made welcome screen instead) Make FAQ
+ * (Sean's part) Implement search/sort/display functionality (by decade, building type, etc.)
+ * (Probably not necessary) Adjust layout for larger screens
+ * (Always working on this!) Add polish (nicer basemap, better icons)
  * TODO: End Todo list
  * **/
 
@@ -61,14 +61,19 @@ public class MainActivity extends AppCompatActivity {
     private GeodatabaseFeatureServiceTable ft;
     private GraphicsLayer gl;
     private Point lastPoint;
+    private SharedPreferenceManager sp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Present the Splash Screen to the user while the app loads
+        sp = new SharedPreferenceManager(getApplicationContext());
         //TODO: make it look better
         setTheme(R.style.SplashTheme);
+
         //Check for internet first, then proceed only if internet was found.
         checkForInternet();
+        //Checks to see if this is the user's first time here (CURRENTLY IT WILL ONLY BOOT HERE, CHANGE IT!)
+        checkForFirstBoot();
         //Now we check to see if we have an intent coming in
         checkForIntent();
         //Initialize the mapFragment
@@ -92,6 +97,17 @@ public class MainActivity extends AppCompatActivity {
         t.setNavigationIcon(R.drawable.ic_list_white_24dp);
         setSupportActionBar(t);
         setupDrawerContent(nvDrawer);
+    }
+
+    private void checkForFirstBoot(){
+        //if(firstBoot)
+        if(sp.isFirstBoot()) {
+            //If this is the first time the user is booting up, show them the welcome screen!
+            Intent i = new Intent(this, WelcomeActivity.class);
+            sp.disableFirstBoot();
+            startActivity(i);
+        }
+
     }
 
 
@@ -141,17 +157,17 @@ public class MainActivity extends AppCompatActivity {
          * We need to upload a file to the website first, so we can't do any work here, yet.
          * **/
         Intent appLinkIntent = getIntent();
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         if(appLinkIntent == null) { //No incoming intent, do nothing
-            sp.edit().putString("startURL","").apply();
+            sp.setStartURL("");
             return null;
         }
         Uri appLinkData = appLinkIntent.getData();
         if(appLinkData == null) {
-            sp.edit().putString("startURL","").apply();
+            sp.setStartURL("");
+
             return null;
         }
-        sp.edit().putString("startURL",appLinkData.toString()).apply();
+        sp.setStartURL(appLinkData.toString());
         return appLinkData.toString();
     }
 
@@ -233,10 +249,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.settingsMenu:
                 fragment = new SettingsFragment();
-                break;
-            case R.id.faqMenu:
-                //fragmentClass = ThirdFragment.class;
-                Toast.makeText(getApplicationContext(),"Open FAQ menu!",Toast.LENGTH_SHORT).show();
                 break;
             case R.id.houseList:
                 //fragment = new HouseListFragment();

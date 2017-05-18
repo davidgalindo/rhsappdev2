@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -14,7 +13,6 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
-import android.preference.PreferenceManager;
 import android.support.annotation.MainThread;
 import android.support.annotation.RequiresPermission;
 import android.support.design.widget.CoordinatorLayout;
@@ -43,6 +41,8 @@ import com.esri.core.map.FeatureResult;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.tasks.query.QueryParameters;
+
+import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
 
 
 /**
@@ -128,9 +128,10 @@ public class MainMapFragment extends Fragment {
 
     private void setMapCenter(){
         //ft = ((MainActivity)getActivity()).getFeatureTable();
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-        String startingLocation = sp.getString("starting_point", "None!");
-        String startURL = sp.getString("startURL","");
+        final SharedPreferenceManager sp = new SharedPreferenceManager(getActivity().getApplicationContext());
+
+        String startingLocation = sp.getStartingPoint();
+        String startURL = sp.getStartURL();
         Log.i("lastCenter",""+ (lastCenter==null));
         if(lastCenter != null){
             Log.i("lastCenter","Initialized to last Center");
@@ -150,7 +151,7 @@ public class MainMapFragment extends Fragment {
                             Feature feature = (Feature) o;
                             highlightHouseInfo(feature.getId());
                         }
-                        sp.edit().putString("startURL","").apply();
+                        sp.setStartURL("");
                     }else{
                         Toast.makeText(getActivity().getApplicationContext(),"No results found.",Toast.LENGTH_LONG).show();
 
@@ -314,12 +315,21 @@ public class MainMapFragment extends Fragment {
             int tolerance = 10; //To account for slight error
             //ie. If there's a point there
             mFeatureLayer.clearSelection(); //Clear any previous selection
+            grabHouse(x,y,tolerance);
+        }
+
+        private void grabHouse(float x, float y, int tolerance){
             if (mFeatureLayer.getFeatureIDs(x, y, tolerance).length != 0) {
                 //Essentially any points that fall within our selection will have their ID in this array
                 long[] ids = mFeatureLayer.getFeatureIDs(x, y, tolerance);
-                if (ids.length > 1) {//If we have more than one match, let's just say, for now, we found more than
-                    //One match and call it a day
-                    Toast.makeText(getActivity().getApplicationContext(), ids.length + " features found.", Toast.LENGTH_LONG).show();
+                if (ids.length > 1) {
+                    //Recursion: If there's more than one match, reduce tolerance until we get a better match.
+                    Log.i("grabHouse","Recursive call made! Tolerance " + (tolerance-1));
+                    if(tolerance == 0){//Uh oh, we're too close! Tell the user to zoom in.
+                        Toast.makeText(getActivity().getApplication(),"Unable to select a specific house, please zoom in!",Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    grabHouse(x,y,tolerance-1);
                     return;
                 }
                 //If not, we highlight the feature on the map!

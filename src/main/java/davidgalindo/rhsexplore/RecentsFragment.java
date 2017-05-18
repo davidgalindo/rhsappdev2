@@ -1,9 +1,7 @@
 package davidgalindo.rhsexplore;
 
 import android.app.Fragment;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +14,8 @@ import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
+
 /**
  * Created by David on 5/15/2017.
  */
@@ -23,7 +23,7 @@ import org.json.JSONException;
 public class RecentsFragment extends Fragment {
     private ListView view;
     private JSONArray recentsArray;
-    private SharedPreferences sp;
+    private SharedPreferenceManager sp;
     private GeodatabaseFeatureServiceTable ft;
 
     @Override
@@ -37,18 +37,11 @@ public class RecentsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         //Grab SharedPreferences
-        sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        sp = new SharedPreferenceManager(getActivity().getApplicationContext());
         //Grab our JSONArray for parsing
         try{
-            recentsArray = new JSONArray(sp.getString("jsonRecents",""));
-
+            recentsArray = new JSONArray(sp.getJSONRecents());
             Log.i("recents",recentsArray.toString());
-            if(recentsArray.length() == 0){//eg. no values
-                Toast.makeText(getActivity().getApplicationContext(),"No recents.",Toast.LENGTH_LONG).show();
-                //Do UI work here, or make another method for it
-                return;
-            }
-
             //Note: display these backwards, eg. start at the end of the list (most recent item)
 
             //Inflate a view for each, asking the FeatureTable for information through the house ID
@@ -56,7 +49,10 @@ public class RecentsFragment extends Fragment {
             Log.i("recents","Feature Table is null? " + (ft==null));
         }catch(JSONException e){
             e.printStackTrace();
-            Toast.makeText(getActivity().getApplicationContext(),"Error while getting recents, please try again later!",Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity().getApplicationContext(),"No recents.",Toast.LENGTH_LONG).show();
+            //Do UI work here, or make another method for it
+
+            //Toast.makeText(getActivity().getApplicationContext(),"Error while getting recents, please try again later!",Toast.LENGTH_LONG).show();
         }
     }
 

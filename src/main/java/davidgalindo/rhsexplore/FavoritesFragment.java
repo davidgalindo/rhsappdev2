@@ -1,7 +1,6 @@
 package davidgalindo.rhsexplore;
 
 import android.app.Fragment;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -16,6 +15,8 @@ import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
+
 /**
  * Created by David on 5/15/2017.
  */
@@ -23,7 +24,7 @@ import org.json.JSONException;
 public class FavoritesFragment extends Fragment {
     private ListView view;
     private JSONArray favoritesArray;
-    private SharedPreferences sp;
+    private SharedPreferenceManager sp;
     private GeodatabaseFeatureServiceTable ft;
 
     @Override
@@ -37,15 +38,10 @@ public class FavoritesFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         //Grab SharedPreferences
-        sp = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        sp = new SharedPreferenceManager(getActivity().getApplicationContext());
         //Grab our JSONArray for parsing
         try{
-            favoritesArray = new JSONArray(sp.getString("jsonFavorites",""));
-            if(favoritesArray.length() == 0){//eg. no values
-                Toast.makeText(getActivity().getApplicationContext(),"No favorites.",Toast.LENGTH_LONG).show();
-                //Do UI work here, or make another method for it
-                return;
-            }
+            favoritesArray = new JSONArray(sp.getJSONFavorites());
 
             Log.i("favorites",favoritesArray.toString());
             //Note: allow the user to rearrange objects in this list, and update the arrayList accordingly (a simple swap)
@@ -55,7 +51,9 @@ public class FavoritesFragment extends Fragment {
             Log.i("favorites","Feature Table is null? " + (ft==null));
         }catch(JSONException e){
             e.printStackTrace();
-            Toast.makeText(getActivity().getApplicationContext(),"Error while getting favorites, please try again later!",Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity().getApplicationContext(),"No favorites.",Toast.LENGTH_LONG).show();
+            //Do UI Work here for an empty list.
+            //Toast.makeText(getActivity().getApplicationContext(),"Error while getting favorites, please try again later!",Toast.LENGTH_LONG).show();
         }
     }
 

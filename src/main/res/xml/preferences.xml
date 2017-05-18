@@ -10,15 +10,12 @@ Basemap type(?)
     <PreferenceCategory
         android:title="@string/personalization"
         android:key="@string/personalization">
-
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/nav"
-        android:key="pref_nav_settings"
-        >
-
+        <davidgalindo.rhsexplore.preferences.NumberPickerPreference
+            android:title="@string/recent_list_size"
+            android:summary="@string/recent_list_size_desc"
+            android:key="recentsSize"
+            android:defaultValue="5"
+            />
         <ListPreference
             android:key="starting_point"
             android:title="@string/starting_point"
@@ -30,22 +27,33 @@ Basemap type(?)
             />
 
     </PreferenceCategory>
+
     <PreferenceCategory
         android:title="@string/notifications"
         android:key="pref_notification_settings"
         >
         <CheckBoxPreference
+            android:defaultValue="false"
             android:key="new_houses_added"
-            android:title="@string/new_houses_added"
             android:summary="@string/new_houses_added_desc"
-            android:defaultValue="true"
-            />
+            android:title="@string/new_houses_added" />
 
         </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/misc"
         android:key="pref_misc_settings"
         >
+        <Preference
+            android:title="@string/view_help"
+            android:key="help"
+            android:summary="@string/view_help_desc"
+            >
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="davidgalindo.rhsexplore"
+                android:targetClass="davidgalindo.rhsexplore.WelcomeActivity"/>
+
+        </Preference>
             <Preference
                 android:title="@string/donate"
                 android:key="donate"
