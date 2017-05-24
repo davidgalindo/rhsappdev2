@@ -29,7 +29,7 @@
     <string name="house_list">House List</string>
     <string name="faq">FAQ</string>
     <string name="my_favorites">My Favorites</string>
-    <string name="recents">Recents</string>
+    <string name="recents">Recently Viewed</string>
     <string name="my_map">My Map</string>
     <string name="other">Other</string>
 
@@ -38,7 +38,7 @@
     <string name="personalization">Personalization</string>
     <string name="recent_list_size">Recent List Size</string>
     <string name="recent_list_size_desc">Adjust the size of your recently viewed houses</string>
-    <string name="clear_recents">Clear recents list</string>
+    <string name="clear_recents">Clear recently viewed list</string>
     <string name="clear_favorites">Clear favorites</string>
 
     <string name="nav">Navigation</string>
@@ -52,12 +52,12 @@
     <string name="new_houses_added">New Houses Added</string>
     <string name="new_houses_added_desc">Sends a notification when new houses are added to the database</string>
 
-    <string name="misc">Miscellaneous</string>
+    <string name="misc">Other</string>
     <string name="view_help">View help slides</string>
     <string name="view_help_desc">Review the basics of the app</string>
     <string name="credits">Credits</string>
     <string name="credits_desc">Meet the awesome people behind the app</string>
-    <string name="donate">Purchase an RAHS Membership</string>
+    <string name="donate">Join the RAHS</string>
     <string name="donate_desc">Your support really helps!</string>
 
 
@@ -106,4 +106,8 @@ Researched and written by Susan M. Keith and Kathy Beall</string>
     <string name="drawer_open">Open Drawer</string>
     <string name="drawer_close">Close Drawer</string>
     <string name="title_activity_settings">Settings</string>
+    
+    <!--Licensing Strings-->
+    <string name="client_id">k2n8aWWWSNQxtY5O</string>
+
 </resources>

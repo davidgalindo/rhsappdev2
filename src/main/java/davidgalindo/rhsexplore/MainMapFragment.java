@@ -101,6 +101,7 @@ public class MainMapFragment extends Fragment {
                         if(ft != null) {
                             setMapCenter();
                         }
+                        //mapView.setEsriLogoVisible(true);
                     }
                 }
                 else if (status == STATUS.INITIALIZED){
@@ -198,7 +199,9 @@ public class MainMapFragment extends Fragment {
         }
 
         @Override
-        public Integer doInBackground(Void... params){
+        public Integer doInBackground(Void... params)
+        {
+
             String name = (String) feature.getAttributeValue("NAME");
             String address = (String) feature.getAttributeValue("Street");
             String picURL = (String) feature.getAttributeValue("PIC_URL");

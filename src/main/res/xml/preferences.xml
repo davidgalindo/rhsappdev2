@@ -28,7 +28,7 @@ Basemap type(?)
 
     </PreferenceCategory>
 
-    <PreferenceCategory
+    <!--<PreferenceCategory
         android:title="@string/notifications"
         android:key="pref_notification_settings"
         >
@@ -38,7 +38,7 @@ Basemap type(?)
             android:summary="@string/new_houses_added_desc"
             android:title="@string/new_houses_added" />
 
-        </PreferenceCategory>
+        </PreferenceCategory>-->
     <PreferenceCategory
         android:title="@string/misc"
         android:key="pref_misc_settings"

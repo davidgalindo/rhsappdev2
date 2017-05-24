@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:layout_width="200dp"
+        android:layout_height="40dp"
+        android:hint="Search for a house"
+        android:id="@+id/search" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="Search"
+        android:id="@+id/searchBtn"
+        android:onClick="searchBtnOnClick"
+        android:layout_gravity="right"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:text="FILTER"
+        android:layout_gravity="right"
+        android:id="@+id/filterBtn"
+        android:onClick="houseFilterButton"/>
+
+</LinearLayout>

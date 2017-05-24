@@ -11,7 +11,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -25,16 +24,15 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
-import com.esri.android.map.FeatureLayer;
 import com.esri.android.map.GraphicsLayer;
+import com.esri.android.runtime.ArcGISRuntime;
 import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
 import com.esri.core.geometry.Point;
 import com.esri.core.map.CallbackListener;
-import com.esri.core.table.FeatureTable;
 
+import davidgalindo.rhsexplore.tools.ConnectivityChecker;
 import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
 
 /**
@@ -47,6 +45,12 @@ import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
  * (Sean's part) Implement search/sort/display functionality (by decade, building type, etc.)
  * (Probably not necessary) Adjust layout for larger screens
  * (Always working on this!) Add polish (nicer basemap, better icons)
+ *
+ * Top Priority:
+ * ( )Get app ready for release:
+ * Remove developer version from map and implement an ESRI license
+ * Request copyright permissions from RAHS to submit to Google
+ * Clean up Logcats and debug toasts
  * TODO: End Todo list
  * **/
 
@@ -62,16 +66,26 @@ public class MainActivity extends AppCompatActivity {
     private GraphicsLayer gl;
     private Point lastPoint;
     private SharedPreferenceManager sp;
+    private boolean duringBoot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Present the Splash Screen to the user while the app loads
         sp = new SharedPreferenceManager(getApplicationContext());
+        duringBoot = true;
         //TODO: make it look better
         setTheme(R.style.SplashTheme);
 
         //Check for internet first, then proceed only if internet was found.
         checkForInternet();
+
+        //Once that's all done with, initialize our layout and content
+        setTheme(R.style.AppTheme);
+        super.onCreate(savedInstanceState);
+        //Licensing - Standard level might require some features, but let's try this first
+        String clientId = getResources().getString(R.string.client_id);
+        ArcGISRuntime.setClientId(clientId);
+
         //Checks to see if this is the user's first time here (CURRENTLY IT WILL ONLY BOOT HERE, CHANGE IT!)
         checkForFirstBoot();
         //Now we check to see if we have an intent coming in
@@ -82,9 +96,6 @@ public class MainActivity extends AppCompatActivity {
         initializeFeatureLayers();
         gl = new GraphicsLayer();
 
-        //Once that's all done with, initialize our layout and content
-        setTheme(R.style.AppTheme);
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
 
@@ -97,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
         t.setNavigationIcon(R.drawable.ic_list_white_24dp);
         setSupportActionBar(t);
         setupDrawerContent(nvDrawer);
+
     }
+
 
     private void checkForFirstBoot(){
         //if(firstBoot)
@@ -177,13 +190,14 @@ public class MainActivity extends AppCompatActivity {
     }
     public GraphicsLayer getGraphicsLayer(){return gl;}
 
-    private void checkForInternet(){
+    private boolean checkForInternet(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.no_internet)
                 .setPositiveButton(R.string.retry, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        checkForInternet();
+                        if(checkForInternet())
+                            startActivity(new Intent(getApplicationContext(),MainActivity.class));
                     }
                 })
                 .setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
@@ -194,12 +208,11 @@ public class MainActivity extends AppCompatActivity {
                 });
         AlertDialog dialog = builder.create();
 
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        if (ni == null || !ni.isConnected()) {//ie. internet is  not available
+        if (ConnectivityChecker.isConnectedToInternet(getApplicationContext())) {//ie. internet is  not available
             Log.i("Connectivity","No internet");
             dialog.show();
-        }
+            return false;
+        }else return true; // We have internet!
 
     }
 
@@ -251,14 +264,13 @@ public class MainActivity extends AppCompatActivity {
                 fragment = new SettingsFragment();
                 break;
             case R.id.houseList:
-                //fragment = new HouseListFragment();
-                Toast.makeText(getApplicationContext(),"Open House List menu!",Toast.LENGTH_SHORT).show();
+                fragment = new HouseListFragment();
                 break;
             case R.id.favorites:
-                fragment = new FavoritesFragment();
+                fragment = SocialFragment.fromJsonArray(sp.getJSONFavorites());
                 break;
             case R.id.recents:
-                fragment = new RecentsFragment();
+                fragment = SocialFragment.fromJsonArray(sp.getJSONRecents());
                 break;
             default:
                 fragment = mainMapFragment;
@@ -274,6 +286,8 @@ public class MainActivity extends AppCompatActivity {
         setTitle(menuItem.getTitle());
         // Close the navigation drawer
         drawerLayout.closeDrawers();
+        //Precautionary step: check for internet
+        checkForInternet();
     }
 
     @Override
