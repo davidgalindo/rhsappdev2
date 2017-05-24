@@ -5,11 +5,11 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -24,6 +24,10 @@ import android.support.v7.widget.Toolbar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.esri.android.map.GraphicsLayer;
@@ -51,6 +55,8 @@ import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
  * Remove developer version from map and implement an ESRI license
  * Request copyright permissions from RAHS to submit to Google
  * Clean up Logcats and debug toasts
+ *
+ * New list to distinguish betweeen buildings, civic buildings, lost buildings, parks and businesses
  * TODO: End Todo list
  * **/
 
@@ -66,13 +72,17 @@ public class MainActivity extends AppCompatActivity {
     private GraphicsLayer gl;
     private Point lastPoint;
     private SharedPreferenceManager sp;
-    private boolean duringBoot;
+    private EditText searchText;
+    private String searchTextString;
+    private HouseListFragment houseListFragment;
+    private Button filterBtn;
+    private Button searchBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Present the Splash Screen to the user while the app loads
         sp = new SharedPreferenceManager(getApplicationContext());
-        duringBoot = true;
+
         //TODO: make it look better
         setTheme(R.style.SplashTheme);
 
@@ -92,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
         checkForIntent();
         //Initialize the mapFragment
         mainMapFragment = new MainMapFragment();
+        houseListFragment = new HouseListFragment();
         //From here, we initialize our FeatureLayers
         initializeFeatureLayers();
         gl = new GraphicsLayer();
@@ -108,6 +119,10 @@ public class MainActivity extends AppCompatActivity {
         t.setNavigationIcon(R.drawable.ic_list_white_24dp);
         setSupportActionBar(t);
         setupDrawerContent(nvDrawer);
+
+        searchTextString = "";
+        searchBtn = (Button) findViewById(R.id.searchBtn);
+        filterBtn = (Button) findViewById(R.id.filterBtn);
 
     }
 
@@ -264,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                 fragment = new SettingsFragment();
                 break;
             case R.id.houseList:
-                fragment = new HouseListFragment();
+                fragment = houseListFragment;
                 break;
             case R.id.favorites:
                 fragment = SocialFragment.fromJsonArray(sp.getJSONFavorites());
@@ -287,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         // Close the navigation drawer
         drawerLayout.closeDrawers();
         //Precautionary step: check for internet
-        checkForInternet();
+       // checkForInternet();
     }
 
     @Override
@@ -324,6 +339,28 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         }
+    }
+    //set onclick for the filter button in HouseListFragment
+
+
+    //set onclick for the search button in HouseListFragment
+    public void searchBtnOnClick(View v) {
+        searchText = (EditText) findViewById(R.id.search);
+        searchTextString = searchText.getText().toString().toLowerCase();
+        //dismiss soft keyboard on search
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(searchText.getWindowToken(), 0);
+
+        houseListFragment.searchBtnOnClick(searchText, searchTextString);
+        Log.i("onclick","succ");
+    }
+
+    public EditText getSearchText() {
+        return searchText;
+    }
+
+    public String getSearchTextString() {
+        return searchTextString;
     }
 
 }

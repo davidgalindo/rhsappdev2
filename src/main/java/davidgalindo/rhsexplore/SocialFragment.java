@@ -154,7 +154,8 @@ public class SocialFragment extends Fragment {
         String picURL = (String) feature.getAttributeValue("THUMB_URL");
         String yearBuilt = (String) feature.getAttributeValue("Year_Built");
         String houseURL = (String) feature.getAttributeValue("WEBSITE");
-        houseList.add(new House(picURL, name, yearBuilt,houseURL));
+        String houseAddress = (String) feature.getAttributeValue("Street");
+        houseList.add(new House(picURL, name, yearBuilt,houseURL,houseAddress));
     }
 
 }

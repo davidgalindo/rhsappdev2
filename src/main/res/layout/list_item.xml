@@ -32,16 +32,22 @@
 
         <TextView
             android:id="@+id/txtview1"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textSize="15dp" />
+            android:layout_gravity="end"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/txtview2"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:textSize="10dp" />
+            android:layout_gravity="end"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/houseAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:textSize="12sp" />
     </LinearLayout>
 </RelativeLayout>

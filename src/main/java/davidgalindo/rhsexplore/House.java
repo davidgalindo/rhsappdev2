@@ -9,17 +9,18 @@ import android.graphics.drawable.Drawable;
 public class House {
 
     private String name, yearBuilt;
-    private Drawable imageId;
     private String imageURL;
     private String houseURL;
+    private String address;
 
 
-    public House(String picURL, String _name, String _yearBuilt, String house)
+    public House(String picURL, String _name, String _yearBuilt, String house, String _address)
     {
         imageURL = picURL;
         name = _name;
         yearBuilt = _yearBuilt;
         houseURL = house;
+        address = _address;
     }
 
 
@@ -38,4 +39,8 @@ public class House {
 
     public String getImageURL(){return imageURL;}
     public String getHouseURL(){return houseURL;}
+
+    public String getAddress() {
+        return address;
+    }
 }
