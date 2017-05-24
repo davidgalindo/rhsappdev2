@@ -1,344 +1,266 @@
-package davidgalindo.rhsexplore;
-
-import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Looper;
-import android.support.annotation.MainThread;
-import android.support.annotation.RequiresPermission;
-import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.provider.SyncStateContract;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Filter;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.esri.android.map.FeatureLayer;
-import com.esri.android.map.GraphicsLayer;
-import com.esri.android.map.Layer;
-import com.esri.android.map.MapView;
-import com.esri.android.map.event.OnSingleTapListener;
-import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.core.geodatabase.GeodatabaseFeatureServiceTable;
-import com.esri.core.geometry.CoordinateConversion;
-import com.esri.core.geometry.Point;
 import com.esri.core.map.CallbackListener;
 import com.esri.core.map.Feature;
 import com.esri.core.map.FeatureResult;
-import com.esri.core.map.Graphic;
-import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.tasks.query.QueryParameters;
 
-import davidgalindo.rhsexplore.tools.SharedPreferenceManager;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Handler;
 
 
 /**
- * Created by David on 4/26/2017.
- * Fragment that contains all the functionality of the ArcGIS Map.
+ * Created by Sean on 5/13/2017.
  */
-
-public class MainMapFragment extends Fragment {
-    private MapView mapView;
-    public static final int PERMISSION_ACCESS_FINE_LOCATION = 1;
-    private CoordinatorLayout view;
+public class HouseListFragment extends Fragment {
     private GeodatabaseFeatureServiceTable ft;
-    private FeatureLayer mFeatureLayer;
-    private Snackbar snackBar;
-    //Layer used for navigation drawing and current location mapping
-    private GraphicsLayer locationLayer;
-    private MapLocationListener locationListener;
-    private Location location;
-    Point lastCenter;
-    private final Point DOWNTOWN_REDLANDS = new Point(34.055569,-117.182538);
-    private Intent houseIntent; //responsible for sending us to a new house
+    private View view, header;
+    Button filterBtn;
+    ListView rootView;
+    HouseAdapter itemsAdapter;
+    ArrayList<House> houseList, filteredHouseList, searchResults;
+    protected CharSequence[] receivers = {"pre-1880", "1880-1889", "1890-1899", "1900-1909", "1910-1919", "1920-1929", "1930-1939"};
+    protected ArrayList<CharSequence> selectedReceivers = new ArrayList<>();
+    EditText searchText;
+    long featureCount;
+    int count;
+    String searchTextString;
+    String s;
+    int checkHouseList, checkSearch, checkFiltered;
+    ProgressBar progressBar;
 
     @Override
-    public void onCreate(Bundle savedInstanceState){
-        super.onCreate(savedInstanceState);
-        //Set up location listener for later
-        lastCenter = null;
-        locationListener = new MapLocationListener();
-    }
-    private void addLayers(){
-        mapView.addLayer(mFeatureLayer = new FeatureLayer(ft));
-        mapView.addLayer(locationLayer = ((MainActivity)getActivity()).getGraphicsLayer());
-    }
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        //this is just so I can access views from the xml files
+        view = inflater.inflate(R.layout.house_list, container, false);
+        Log.i("views", "" + (view == null));
+        houseList = new ArrayList<House>();
+        filteredHouseList = new ArrayList<House>();
+        searchResults = new ArrayList<House>();
+        rootView = (ListView) view.findViewById(R.id.houseListRV);
+        header = inflater.inflate(R.layout.house_list_header, rootView, false);
 
-    @Override
-    public CoordinatorLayout onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        ft = ((MainActivity)getActivity()).getFeatureTable();
-        // Inflate the layout for this fragment
-        view = (CoordinatorLayout) inflater.inflate(R.layout.arcgis_map_view, container, false);
-        mapView = (MapView) view.findViewById(R.id.mapView);
-        mapView.enableWrapAround(true);
-        //Reacts when a user tries to select a point on the map.
-        mapView.setOnSingleTapListener(new OnMapItemClickListener());
-        //Set Precise Location Button Listener
-        FloatingActionButton preciseLocationBtn = (FloatingActionButton) view.findViewById(R.id.fab);
-        preciseLocationBtn.setOnClickListener(new LocationFabListener());
-        //Set up references
-        snackBar = Snackbar.make(view,"blank",0);
-        mapView.setOnStatusChangedListener(new OnStatusChangedListener() {
-            @Override
-            public void onStatusChanged(Object o, STATUS status) {
-                if(status == STATUS.LAYER_LOADED){
-                    //Make sure we're only setting the center once
-                    if(((Layer)o).getID() == mFeatureLayer.getID()){
-                        if(ft != null) {
-                            setMapCenter();
-                        }
-                    }
-                }
-                else if (status == STATUS.INITIALIZED){
-                    mapView.setEsriLogoVisible(true);
-                }
-            }
-        });
+        ft = ((MainActivity) getActivity()).getFeatureTable();
+
+        checkHouseList = 0;
+        createArrayAdapterWithHouseList();
+        queryTableElements();
+
         return view;
     }
 
-    @Override public void onPause() {
-        super.onPause();
-        ((MainActivity)getActivity()).setPoint(mapView.getCenter());
-        Log.i("lastCenter onPause",""+ (lastCenter==null));
-        mapView.removeLayer(locationLayer);
-        mapView.removeLayer(mFeatureLayer);
-        mapView.pause();
-    }
-    @Override public void onResume() {super.onResume();
-        mapView.unpause();
-        if(ft!=null)
-            addLayers();
-        lastCenter = ((MainActivity)getActivity()).getPoint();
+    public void searchBtnOnClick(EditText _searchText, String _searchTextString) {
+        checkSearch = 0;
+        searchText = _searchText;
+        searchTextString = _searchTextString;
+
+        createArrayAdapterWithSearchResults();
+        queryTableElements();
+        Log.i("onclick", "successsss");
     }
 
-    private void setMapCenter(){
-        //ft = ((MainActivity)getActivity()).getFeatureTable();
-        final SharedPreferenceManager sp = new SharedPreferenceManager(getActivity().getApplicationContext());
+    public void createFilterDialog() {
+        checkFiltered = 0;
+        createArrayAdapterWithFilteredHouseList();
+        final boolean[] checkedReceivers = new boolean[receivers.length];
+        //set all receivers initially to false
+        for (int i = 0; i < receivers.length; i++)
+            checkedReceivers[i] = false;
 
-        String startingLocation = sp.getStartingPoint();
-        String startURL = sp.getStartURL();
-        Log.i("lastCenter",""+ (lastCenter==null));
-        if(lastCenter != null){
-            Log.i("lastCenter","Initialized to last Center");
-            mapView.centerAt(lastCenter, false);
-        }
-        else if (!startURL.equals("")){
-            Log.i("query","Search for " + startURL);
-            QueryParameters q = new QueryParameters();
-            q.setWhere("WEBSITE LIKE '" + startURL +"'");
+        Log.i("selecteddecades", "sucess");
+        selectedReceivers.clear();
+        filteredHouseList.clear();
+        s = "";
 
-            ft.queryFeatures(q, new CallbackListener<FeatureResult>() {
-                @Override
-                public void onCallback(FeatureResult objects) {
-                    if(objects.featureCount() > 0){
-                        Log.i("query","Object found " );
-                        for(Object o: objects){
-                            Feature feature = (Feature) o;
-                            highlightHouseInfo(feature.getId());
-                        }
-                        sp.setStartURL("");
-                    }else{
-                        Toast.makeText(getActivity().getApplicationContext(),"No results found.",Toast.LENGTH_LONG).show();
+        Log.i("selectedreceivers", Integer.toString(selectedReceivers.size()));
+        DialogInterface.OnMultiChoiceClickListener receiversDialogListener = new DialogInterface.OnMultiChoiceClickListener() {
 
+            @Override
+            public void onClick(DialogInterface dialog, int position, boolean isChecked) {
+                if (isChecked) {
+                    if (!selectedReceivers.contains(receivers[position]))
+                        selectedReceivers.add(receivers[position]);
+                } else {
+                    if (selectedReceivers.contains(receivers[position]))
+                        selectedReceivers.remove(receivers[position]);
+                }
+                int count = receivers.length;
+                for (int i = 0; i < count; i++)
+                    checkedReceivers[i] = selectedReceivers.contains(receivers[i]);
+            }
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder
+                .setTitle("Select Decade Built")
+                .setMultiChoiceItems(receivers, checkedReceivers, receiversDialogListener)
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        queryTableElements();
                     }
-                }
+                });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
-                @Override
-                public void onError(Throwable throwable) {
-                    Log.i("query","Some error occurred. ");
+    public void queryTableElements() {
+        Log.i("query", "succes");
+        count = 0;
+        featureCount = 1;
+        QueryParameters q = new QueryParameters();
+        q.setWhere("State LIKE '" + "CA" + "'");
+        if (ft.getStatus() != GeodatabaseFeatureServiceTable.Status.INITIALIZED) {
+            Log.i("initialize", "fail");
+            return;
+        }
+        ft.queryFeatures(q, new CallbackListener<FeatureResult>() {
+            @Override
+            public void onCallback(FeatureResult objects) {
+                if (objects.featureCount() > 0) {
+                    featureCount = objects.featureCount();
+                    for (Object o : objects) {
+                        Log.i("FeatureResult", Long.toString(objects.featureCount()));
+                        count++;
+                        Feature feature = (Feature) o;
+                        highlightHouseInfo(feature);
+                    }
+                    Log.i("Houselist", Integer.toString(houseList.size()));
+                    sortAlphabetically(houseList);
+                    sortAlphabetically(searchResults);
+                    sortYearBuilt(filteredHouseList);
+                    itemsAdapter.notifyDataSetChanged();
+
+                    checkHouseList = 0;
+                    checkFiltered = 0;
+                    checkSearch = 0;
+
+                } else {
+                    Toast.makeText(getActivity().getApplicationContext(), "No results found.", Toast.LENGTH_SHORT).show();
                 }
-            });
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+            }
+        });
+        if (checkHouseList == 1) {
+            do {
+                itemsAdapter.notifyDataSetChanged();
+                Log.i("notify", "succesS");
+                if(count == featureCount) {
+                    break;
+                }
+            }while(true);
         }
-        else if (startingLocation.equals("currentlocation")) {
-            grabCurrentUserLocation();
-            Log.i("Shared Preferences", "Initialized to Current Location");
-        } else {
-            mapView.centerAndZoom(DOWNTOWN_REDLANDS.getX(), DOWNTOWN_REDLANDS.getY(), 16);
-            Log.i("Shared Preferences", "Initialized to Downtown");
-        }
+
+    }
+
+    public void createArrayAdapterWithHouseList() {
+        checkHouseList++;
+        itemsAdapter = new HouseAdapter(getActivity(), houseList);
+        rootView.addHeaderView(header, null, false);
+        rootView.setAdapter(itemsAdapter);
+    }
+
+    public void createArrayAdapterWithSearchResults() {
+        checkSearch++;
+        searchResults.clear();
+        itemsAdapter = new HouseAdapter(getActivity(), searchResults);
+        // rootView.addHeaderView(header, null, false);
+        rootView.setAdapter(itemsAdapter);
+
+    }
+
+    public void createArrayAdapterWithFilteredHouseList() {
+        checkFiltered++;
+        itemsAdapter = new HouseAdapter(getActivity(), houseList);
+        //rootView.addHeaderView(header, null, false);
+        //rootView.setAdapter(itemsAdapter);
     }
 
 
-    private void highlightHouseInfo(long id){
+    private void sortAlphabetically(ArrayList<House> list) {
+        Collections.sort(list, new Comparator<House>() {
+            public int compare(House h1, House h2) {
+                return h1.getName().compareTo(h2.getName());
+            }
+        });
+    }
+
+    private void sortYearBuilt(ArrayList<House> list) {
+        Collections.sort(list, new Comparator<House>() {
+            public int compare(House h1, House h2) {
+                return h1.getYearBuilt().compareTo(h2.getYearBuilt());
+            }
+        });
+    }
+
+    private void highlightHouseInfo(Feature feature) {
         //Let's select our match and extract some data from it.
-        Log.i("query","Highlighting house " + id );
-        Feature feature = mFeatureLayer.getFeature(id);
-        mFeatureLayer.clearSelection();
-        //Gather the intent data in the background, and once it's ready, show it!
-        new IntentGeneratingAsyncTask(feature).execute();
+        String name = (String) feature.getAttributeValue("NAME");
+        String picURL = (String) feature.getAttributeValue("THUMB_URL");
+        String yearBuilt = (String) feature.getAttributeValue("Year_Built");
+        String houseURL = (String) feature.getAttributeValue("WEBSITE");
+        String decadeBuilt = (String) feature.getAttributeValue("Decade");
 
-    }
-
-    //I made this asynctask to reduce the load on the main thread
-    private class IntentGeneratingAsyncTask extends AsyncTask<Void,Void,Integer> {
-        String houseName;
-        String houseAddress;
-        String houseBuiltAwarded;
-        String imgUrl;
-        String websiteURL;
-        long houseId;
-        Feature feature;
-        public IntentGeneratingAsyncTask(Feature feature){
-            this.feature = feature;
+        if (checkHouseList == 1) {
+            houseList.add(new House(picURL, name, yearBuilt, houseURL));
+            Log.i("housearray", Integer.toString(houseList.size()));
         }
 
-        @Override
-        public Integer doInBackground(Void... params){
-            String name = (String) feature.getAttributeValue("NAME");
-            String address = (String) feature.getAttributeValue("Street");
-            String picURL = (String) feature.getAttributeValue("PIC_URL");
-            String builtAwarded ="Built " + feature.getAttributeValue("Year_Built")+ ", Awarded " + feature.getAttributeValue("Year_Awarded");
-            String websiteURL = (String) feature.getAttributeValue("WEBSITE");
-            houseAddress = address;
-            houseName = name;
-            houseBuiltAwarded = builtAwarded;
-            imgUrl = picURL;
-            this.websiteURL = websiteURL;
-            houseId = feature.getId();
-            //Set up an intent to pass on information to our HouseInfoActivity
-            houseIntent = new Intent(getActivity().getApplicationContext(),HouseInfoActivity.class);
-            houseIntent.putExtra("houseName",houseName);
-            houseIntent.putExtra("houseAddress",houseAddress);
-            houseIntent.putExtra("houseBuiltAwarded",houseBuiltAwarded);
-            houseIntent.putExtra("houseImgUrl",imgUrl);
-            houseIntent.putExtra("websiteURL",websiteURL);
-            houseIntent.putExtra("houseId",houseId);
-
-            return 1;
-        }
-
-        @Override
-        public void onPostExecute(Integer i){
-            Point p = (Point) feature.getGeometry();
-            mapView.centerAt(p,true);
-            mFeatureLayer.selectFeature(houseId);
-            String coords = CoordinateConversion.pointToDegreesMinutesSeconds(mapView.getCenter(),mapView.getSpatialReference(),6);
-            houseIntent.putExtra("houseCoords",coords);
-            HouseInfoOnClickListener onClickListener = new HouseInfoOnClickListener(houseIntent);
-            //Let's use a SnackBar to present the name in a less gaudy format
-            snackBar = Snackbar.make(view,houseName,Snackbar.LENGTH_INDEFINITE);
-            snackBar.setAction("INFO",onClickListener).show();
-        }
-    }
-
-    /** OnClick Listeners**/
-
-
-    private class LocationFabListener implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            grabCurrentUserLocation();
-        }
-    }
-
-    private void grabCurrentUserLocation(){
-        //Once this button is clicked, that means the user wants their current location in the center of the map.
-
-        //This mess checks to see if we have permission, then we ask politely if we don't
-        if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(getActivity(), new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                    PERMISSION_ACCESS_FINE_LOCATION);
-        }
-        //Once that permission has been granted, we obtain it; it not, we tell the user that's not possible.
-        if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            beginGettingALocation();
-        }
-        //If no permission is granted, our activity will show a message!
-
-    }
-
-    @RequiresPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-    public void beginGettingALocation(){
-        LocationManager lm = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-        //Use both the GPS and the Network provider to see who gets the update faster
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,locationListener);
-        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,0,0,locationListener);
-    }
-
-    private class MapLocationListener implements LocationListener{
-        @Override public void onStatusChanged(String str, int value, Bundle bundle){}
-        @Override public void onProviderEnabled(String provider){}
-        @Override public void onProviderDisabled(String provider){}
-        @Override public void onLocationChanged(Location _location){
-            location = _location;
-            //lm.requestSingleUpdate(LocationManager.GPS_PROVIDER,locationListener, Looper.getMainLooper());
-            if (location != null) {
-                //If the location is not null, center the map accordingly and highlight the point
-                //But first clear our locationLayer
-                locationLayer.removeAll();
-                //Create a marker that's shaped like a circle
-                Log.i("User Location" , location.getLatitude() + " " + location.getLongitude());
-                SimpleMarkerSymbol simpleMarker = new SimpleMarkerSymbol(Color.BLUE, 10, SimpleMarkerSymbol.STYLE.CIRCLE);
-                mapView.centerAt(location.getLatitude(), location.getLongitude(), false);
-                Graphic pointOnMap = new Graphic(mapView.getCenter(),simpleMarker);
-                locationLayer.addGraphic(pointOnMap);
-                //Remove the listener once we're done
-                ((LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE)).removeUpdates(locationListener);
+        if (checkSearch == 1) {
+            if (name.toLowerCase().contains(searchTextString)) {
+                searchResults.add(new House(picURL, name, yearBuilt, houseURL));
             }
         }
-    }
 
-    private class HouseInfoOnClickListener implements View.OnClickListener{
-        Intent i;
-        public HouseInfoOnClickListener(Intent i){
-            this.i = i;
-        }
-        @Override
-        public void onClick(View view){
-            //Here we convert from the map's coordinates to the traditional latitude longitude coordinates
+        //Log.i("search",Integer.toString(searchTextString.length()));
+        //Log.i("searcharray",Integer.toString(searchResults.size()));
 
-            //Time to send them to the next activity (==( >|O
-            startActivity(i);
-        }
-    }
-
-    private class OnMapItemClickListener implements OnSingleTapListener{
-        @Override
-        public void onSingleTap(float x, float y) {
-            int tolerance = 10; //To account for slight error
-            //ie. If there's a point there
-            mFeatureLayer.clearSelection(); //Clear any previous selection
-            grabHouse(x,y,tolerance);
-        }
-
-        private void grabHouse(float x, float y, int tolerance){
-            if (mFeatureLayer.getFeatureIDs(x, y, tolerance).length != 0) {
-                //Essentially any points that fall within our selection will have their ID in this array
-                long[] ids = mFeatureLayer.getFeatureIDs(x, y, tolerance);
-                if (ids.length > 1) {
-                    //Recursion: If there's more than one match, reduce tolerance until we get a better match.
-                    Log.i("grabHouse","Recursive call made! Tolerance " + (tolerance-1));
-                    if(tolerance == 0){//Uh oh, we're too close! Tell the user to zoom in.
-                        Toast.makeText(getActivity().getApplication(),"Unable to select a specific house, please zoom in!",Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    grabHouse(x,y,tolerance-1);
-                    return;
+        if (checkFiltered == 1) {
+            if (selectedReceivers.contains(decadeBuilt)) {
+                //filteredHouseList.add(new House(picURL, name, yearBuilt,houseURL));
+                if (!houseList.contains(feature)) {
+                    Log.i("filtered","add");
+                    houseList.add(new House(picURL, name, yearBuilt, houseURL));
                 }
-                //If not, we highlight the feature on the map!
-                mFeatureLayer.clearSelection();
-                highlightHouseInfo(ids[0]);
-            }
-            else{//No matches, so let's hide the SnackBar
-                snackBar.dismiss();
-                mFeatureLayer.clearSelection();
+            } else {
+                Log.i("filtered","remove1");
+//selectedReceivers doesn't contain decadeBuilt
+                if (houseList.contains(feature)) {
+                    Log.i("filtered","remove");
+                    houseList.remove(feature);
+                }
             }
         }
     }
